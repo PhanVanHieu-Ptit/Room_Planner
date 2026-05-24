@@ -17,7 +17,7 @@ function updateItemField<K extends keyof FurnitureItem>(field: K, value: Furnitu
 }
 
 function commitItemChange(): void {
-  historyStore.snapshot([...furnitureStore.items])
+  historyStore.saveSnapshot(furnitureStore.items)
 }
 
 function updateRoomField<K extends keyof RoomConfig>(field: K, value: RoomConfig[K]): void {
@@ -27,7 +27,6 @@ function updateRoomField<K extends keyof RoomConfig>(field: K, value: RoomConfig
 function handleDeleteItem(): void {
   if (!selectedItem.value) return
   furnitureStore.removeItem(selectedItem.value.id)
-  historyStore.snapshot([...furnitureStore.items])
 }
 
 function handleToggleLock(): void {

@@ -23,7 +23,7 @@ function handleRedo(): void {
 
 function handleClearAll(): void {
   furnitureStore.clearAll()
-  historyStore.snapshot([])
+  historyStore.saveSnapshot([])
 }
 
 function handleExportJSON(): void {

@@ -1,44 +1,72 @@
-import { ref } from 'vue'
-import type { Ref } from 'vue'
-import type { DragState, FurnitureItem, Position } from '@/types'
+import { ref, computed } from 'vue'
+import type { Ref, ComputedRef } from 'vue'
+import type { FurnitureItem } from '@/types'
+import { useFurnitureStore } from '@/stores/furnitureStore'
+import { useRoomStore } from '@/stores/roomStore'
 
-export function useDragDrop(): {
-  dragState: Ref<DragState>
-  startDrag: (item: FurnitureItem, event: MouseEvent) => void
-  onDragMove: (event: MouseEvent, canvasEl: HTMLElement) => Position | null
-  endDrag: () => void
+const GRID = 20
+
+interface DragState {
+  itemId: string | null
+  itemWidth: number
+  itemHeight: number
+  offsetX: number
+  offsetY: number
+}
+
+const IDLE: DragState = { itemId: null, itemWidth: 0, itemHeight: 0, offsetX: 0, offsetY: 0 }
+
+export function useDragDrop(svgRef: Ref<SVGSVGElement | null>): {
+  onPointerDown: (item: FurnitureItem, event: PointerEvent) => void
+  onPointerMove: (event: PointerEvent) => void
+  onPointerUp: (event: PointerEvent) => void
+  isDragging: ComputedRef<boolean>
 } {
-  const dragState = ref<DragState>({
-    isDragging: false,
-    itemId: null,
-    offsetX: 0,
-    offsetY: 0
-  })
+  const furnitureStore = useFurnitureStore()
+  const roomStore = useRoomStore()
 
-  function startDrag(item: FurnitureItem, event: MouseEvent): void {
+  const dragState = ref<DragState>({ ...IDLE })
+  const isDragging = computed(() => dragState.value.itemId !== null)
+
+  function toSVGCoords(clientX: number, clientY: number) {
+    const svg = svgRef.value!
+    const pt = svg.createSVGPoint()
+    pt.x = clientX
+    pt.y = clientY
+    return pt.matrixTransform(svg.getScreenCTM()!.inverse())
+  }
+
+  function snap(val: number): number {
+    return Math.round(val / GRID) * GRID
+  }
+
+  function onPointerDown(item: FurnitureItem, event: PointerEvent): void {
+    if (item.locked || !svgRef.value) return
     event.preventDefault()
-    const target = event.currentTarget as HTMLElement
-    const rect = target.getBoundingClientRect()
+    const svgPos = toSVGCoords(event.clientX, event.clientY)
     dragState.value = {
-      isDragging: true,
       itemId: item.id,
-      offsetX: event.clientX - rect.left,
-      offsetY: event.clientY - rect.top
+      itemWidth: item.width,
+      itemHeight: item.height,
+      offsetX: svgPos.x - item.x,
+      offsetY: svgPos.y - item.y,
     }
+    ;(event.target as Element).setPointerCapture(event.pointerId)
   }
 
-  function onDragMove(event: MouseEvent, canvasEl: HTMLElement): Position | null {
-    if (!dragState.value.isDragging) return null
-    const canvasRect = canvasEl.getBoundingClientRect()
-    return {
-      x: event.clientX - canvasRect.left - dragState.value.offsetX,
-      y: event.clientY - canvasRect.top - dragState.value.offsetY
-    }
+  function onPointerMove(event: PointerEvent): void {
+    const { itemId, itemWidth, itemHeight, offsetX, offsetY } = dragState.value
+    if (!itemId) return
+    const svgPos = toSVGCoords(event.clientX, event.clientY)
+    const { width: roomW, height: roomH } = roomStore.config
+    const x = Math.max(0, Math.min(snap(svgPos.x - offsetX), roomW - itemWidth))
+    const y = Math.max(0, Math.min(snap(svgPos.y - offsetY), roomH - itemHeight))
+    furnitureStore.updateItem(itemId, { x, y })
   }
 
-  function endDrag(): void {
-    dragState.value = { isDragging: false, itemId: null, offsetX: 0, offsetY: 0 }
+  function onPointerUp(_event: PointerEvent): void {
+    dragState.value = { ...IDLE }
   }
 
-  return { dragState, startDrag, onDragMove, endDrag }
+  return { onPointerDown, onPointerMove, onPointerUp, isDragging }
 }

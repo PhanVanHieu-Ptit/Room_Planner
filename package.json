@@ -14,8 +14,10 @@
     "format:check": "prettier --check \"src/**/*.{vue,ts,tsx,css}\""
   },
   "dependencies": {
+    "@vueuse/core": "^14.3.0",
     "html2canvas": "^1.4.1",
     "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^3.2.3",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"
   },
