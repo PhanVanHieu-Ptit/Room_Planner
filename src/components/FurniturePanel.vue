@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { useFurnitureStore } from '@/stores/furnitureStore'
-import { useHistoryStore } from '@/stores/historyStore'
 import { useRoomStore } from '@/stores/roomStore'
 import type { FurnitureTemplate } from '@/types'
 
 const furnitureStore = useFurnitureStore()
-const historyStore = useHistoryStore()
 const roomStore = useRoomStore()
 
 const templates: FurnitureTemplate[] = [
@@ -21,20 +19,9 @@ const templates: FurnitureTemplate[] = [
 ]
 
 function addToCenter(template: FurnitureTemplate): void {
-  const centerX = Math.round(roomStore.config.width / 2 - template.defaultWidth / 2)
-  const centerY = Math.round(roomStore.config.height / 2 - template.defaultHeight / 2)
-  furnitureStore.addItem({
-    name: template.name,
-    type: template.type,
-    x: centerX,
-    y: centerY,
-    width: template.defaultWidth,
-    height: template.defaultHeight,
-    rotation: 0,
-    color: template.color,
-    locked: false
-  })
-  historyStore.snapshot([...furnitureStore.items])
+  const centerX = Math.round(roomStore.config.width / 2)
+  const centerY = Math.round(roomStore.config.height / 2)
+  furnitureStore.addItem(template.type, centerX, centerY)
 }
 </script>
 
