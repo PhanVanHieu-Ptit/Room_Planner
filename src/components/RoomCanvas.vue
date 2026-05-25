@@ -54,6 +54,7 @@ function handlePointerUp(event: PointerEvent): void {
   <div class="w-full h-full bg-gray-100 p-6 flex items-center justify-center overflow-hidden">
     <svg
       ref="svgEl"
+      data-room-canvas
       :viewBox="`-40 -40 ${roomStore.config.width + 80} ${roomStore.config.height + 80}`"
       style="width: 100%; height: 100%"
       preserveAspectRatio="xMidYMid meet"

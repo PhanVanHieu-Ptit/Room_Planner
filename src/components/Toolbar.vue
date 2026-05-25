@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useFurnitureStore } from '@/stores/furnitureStore'
 import { useHistoryStore } from '@/stores/historyStore'
 import { useRoomStore } from '@/stores/roomStore'
@@ -9,7 +10,9 @@ const furnitureStore = useFurnitureStore()
 const historyStore = useHistoryStore()
 const roomStore = useRoomStore()
 const { snapEnabled, toggleSnap } = useSnap()
-const { isExporting, exportToJSON, exportToPNG } = useExport()
+const { isExporting, exportJSON, exportSVGtoPNG, importJSON } = useExport()
+
+const importFileInput = ref<HTMLInputElement | null>(null)
 
 function handleUndo(): void {
   const restored = historyStore.undo()
@@ -27,13 +30,29 @@ function handleClearAll(): void {
 }
 
 function handleExportJSON(): void {
-  exportToJSON(furnitureStore.items, roomStore.config)
+  exportJSON()
 }
 
 async function handleExportPNG(): Promise<void> {
-  const canvasEl = document.querySelector<HTMLElement>('[data-room-canvas]')
-  if (!canvasEl) return
-  await exportToPNG(canvasEl, roomStore.config.name.replace(/\s+/g, '_'))
+  const svgEl = document.querySelector<SVGSVGElement>('[data-room-canvas]')
+  await exportSVGtoPNG(svgEl, roomStore.config.name.replace(/\s+/g, '_'))
+}
+
+function handleImportClick(): void {
+  importFileInput.value?.click()
+}
+
+async function handleImportJSON(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  try {
+    await importJSON(file)
+  } catch (err) {
+    alert(`Import failed: ${err instanceof Error ? err.message : String(err)}`)
+  } finally {
+    input.value = ''
+  }
 }
 </script>
 
@@ -84,6 +103,20 @@ async function handleExportPNG(): Promise<void> {
     >
       Export JSON
     </button>
+    <button
+      @click="handleImportClick"
+      class="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50
+             text-gray-700 transition-colors"
+    >
+      Import JSON
+    </button>
+    <input
+      ref="importFileInput"
+      type="file"
+      accept=".json"
+      class="hidden"
+      @change="handleImportJSON"
+    />
     <button
       @click="handleExportPNG"
       :disabled="isExporting"

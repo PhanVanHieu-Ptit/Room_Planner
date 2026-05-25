@@ -5,7 +5,13 @@
       "Bash(npm run *)",
       "Bash(npx eslint *)",
       "Bash(npm test *)",
-      "Bash(grep -n 'flush\\\\|subscribeOptions\\\\|$subscribe' /Users/phanvanhieu/Documents/CaNhan/MyProject/Room_Planner/node_modules/pinia/dist/pinia.mjs)"
+      "Bash(grep -n 'flush\\\\|subscribeOptions\\\\|$subscribe' /Users/phanvanhieu/Documents/CaNhan/MyProject/Room_Planner/node_modules/pinia/dist/pinia.mjs)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(cat > *)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }

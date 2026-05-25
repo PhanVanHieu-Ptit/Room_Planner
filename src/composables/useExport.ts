@@ -46,13 +46,15 @@ function triggerDownload(url: string, filename: string): void {
   const a = document.createElement('a')
   a.href = url
   a.download = filename
+  document.body.appendChild(a)
   a.click()
+  document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
 
 export function useExport(): {
   isExporting: Ref<boolean>
-  exportSVGtoPNG: (svgRef: Ref<SVGSVGElement | null>, filename?: string) => Promise<void>
+  exportSVGtoPNG: (svgEl: SVGSVGElement | null, filename?: string) => Promise<void>
   exportJSON: () => void
   importJSON: (file: File) => Promise<void>
 } {
@@ -60,8 +62,7 @@ export function useExport(): {
   const roomStore = useRoomStore()
   const furnitureStore = useFurnitureStore()
 
-  async function exportSVGtoPNG(svgRef: Ref<SVGSVGElement | null>, filename = 'room-layout'): Promise<void> {
-    const svgEl = svgRef.value
+  async function exportSVGtoPNG(svgEl: SVGSVGElement | null, filename = 'room-layout'): Promise<void> {
     if (!svgEl) return
 
     isExporting.value = true
@@ -72,8 +73,9 @@ export function useExport(): {
 
       await new Promise<void>((resolve, reject) => {
         const img = new Image()
+        img.crossOrigin = 'anonymous'
         img.onload = () => {
-          const scale = 2
+          const scale = window.devicePixelRatio || 2
           const canvas = document.createElement('canvas')
           canvas.width = svgEl.clientWidth * scale
           canvas.height = svgEl.clientHeight * scale
