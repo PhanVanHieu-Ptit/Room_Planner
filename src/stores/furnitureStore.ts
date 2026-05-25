@@ -34,6 +34,8 @@ function defaultsForType(type: string): TypeDefaults {
 export const useFurnitureStore = defineStore('furniture', () => {
   const items = ref<FurnitureItem[]>([])
   const selectedId = ref<string | null>(null)
+  const selectedIds = ref<string[]>([])
+  const pendingDrag = ref<{ type: string; width: number; height: number } | null>(null)
   const historyStore = useHistoryStore()
 
   const selectedItem = computed<FurnitureItem | null>(() => {
@@ -92,26 +94,62 @@ export const useFurnitureStore = defineStore('furniture', () => {
 
   function selectItem(id: string | null): void {
     selectedId.value = id
+    selectedIds.value = id ? [id] : []
+  }
+
+  function addToSelection(id: string): void {
+    if (selectedIds.value.includes(id)) {
+      selectedIds.value = selectedIds.value.filter(i => i !== id)
+      if (selectedId.value === id) {
+        selectedId.value = selectedIds.value[selectedIds.value.length - 1] ?? null
+      }
+    } else {
+      selectedIds.value = [...selectedIds.value, id]
+      selectedId.value = id
+    }
+  }
+
+  function setSelectedIds(ids: string[]): void {
+    selectedIds.value = ids
+    selectedId.value = ids[ids.length - 1] ?? null
+  }
+
+  function removeItemSilent(id: string): void {
+    items.value = items.value.filter(item => item.id !== id)
+    if (selectedId.value === id) selectedId.value = null
+    selectedIds.value = selectedIds.value.filter(i => i !== id)
+  }
+
+  function removeItemsSilent(ids: string[]): void {
+    const idSet = new Set(ids)
+    items.value = items.value.filter(item => !idSet.has(item.id))
+    if (selectedId.value && idSet.has(selectedId.value)) selectedId.value = null
+    selectedIds.value = selectedIds.value.filter(i => !idSet.has(i))
   }
 
   function setItems(newItems: FurnitureItem[]): void {
     items.value = newItems.map(item => ({ ...item }))
     selectedId.value = null
+    selectedIds.value = []
   }
 
   return {
     items,
     selectedId,
+    selectedIds,
+    pendingDrag,
     selectedItem,
     itemCount,
     addItem,
     updateItem,
     removeItem,
+    removeItemSilent,
+    removeItemsSilent,
     duplicateItem,
     clearAll,
     selectItem,
+    addToSelection,
+    setSelectedIds,
     setItems,
   }
-}, {
-  persist: { pick: ['items'] },
 })

@@ -8,15 +8,32 @@ const furnitureStore = useFurnitureStore()
 const historyStore = useHistoryStore()
 
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
-  if (!e.ctrlKey && !e.metaKey) return
-  if (e.key === 'z' && !e.shiftKey) {
-    e.preventDefault()
-    const restored = historyStore.undo()
-    if (restored !== null) furnitureStore.setItems(restored)
-  } else if ((e.key === 'Z' && e.shiftKey) || (e.key === 'y' && !e.shiftKey)) {
-    e.preventDefault()
-    const restored = historyStore.redo()
-    if (restored !== null) furnitureStore.setItems(restored)
+  const tag = (e.target as Element)?.tagName ?? ''
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
+  // Undo / Redo
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'z' && !e.shiftKey) {
+      e.preventDefault()
+      const restored = historyStore.undo()
+      if (restored !== null) furnitureStore.setItems(restored)
+    } else if ((e.key === 'Z' && e.shiftKey) || (e.key === 'y' && !e.shiftKey)) {
+      e.preventDefault()
+      const restored = historyStore.redo()
+      if (restored !== null) furnitureStore.setItems(restored)
+    }
+    return
+  }
+
+  // R / Shift+R — rotate selected item ±90°
+  if (e.key === 'r' || e.key === 'R') {
+    const item = furnitureStore.selectedItem
+    if (item) {
+      e.preventDefault()
+      const delta = e.shiftKey ? -90 : 90
+      historyStore.saveSnapshot(furnitureStore.items)
+      furnitureStore.updateItem(item.id, { rotation: ((item.rotation + delta) % 360 + 360) % 360 })
+    }
   }
 })
 </script>

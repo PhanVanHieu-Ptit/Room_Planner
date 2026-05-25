@@ -21,6 +21,7 @@ export function useDragDrop(svgRef: Ref<SVGSVGElement | null>): {
   onPointerMove: (event: PointerEvent) => void
   onPointerUp: (event: PointerEvent) => void
   isDragging: ComputedRef<boolean>
+  toSVGCoords: (clientX: number, clientY: number) => { x: number; y: number }
 } {
   const furnitureStore = useFurnitureStore()
   const roomStore = useRoomStore()
@@ -68,5 +69,5 @@ export function useDragDrop(svgRef: Ref<SVGSVGElement | null>): {
     dragState.value = { ...IDLE }
   }
 
-  return { onPointerDown, onPointerMove, onPointerUp, isDragging }
+  return { onPointerDown, onPointerMove, onPointerUp, isDragging, toSVGCoords }
 }
