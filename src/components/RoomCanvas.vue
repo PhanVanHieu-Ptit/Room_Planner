@@ -115,6 +115,27 @@ function handleRotatePointerUp(): void {
   liveAngleDeg.value = null
 }
 
+function handleRotateTouchStart(item: FurnitureItem, e: TouchEvent): void {
+  const t = e.touches[0]
+  handleRotatePointerDown(item, {
+    clientX: t.clientX,
+    clientY: t.clientY,
+    target: e.target,
+    pointerId: 0,
+    preventDefault: () => {},
+  } as unknown as PointerEvent)
+}
+
+function handleRotateTouchMove(e: TouchEvent): void {
+  if (!rotatingId.value) return
+  const t = e.touches[0]
+  handleRotatePointerMove({ clientX: t.clientX, clientY: t.clientY } as PointerEvent)
+}
+
+function handleRotateTouchEnd(): void {
+  handleRotatePointerUp()
+}
+
 function buildArcPath(w: number, h: number): string {
   const r = Math.max(w, h) / 2 + 10
   const cx = w / 2
@@ -175,6 +196,21 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
           ? [furnitureStore.selectedId]
           : []
     deleteItemsWithAnimation(ids)
+  }
+})
+
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  const tag = (e.target as Element)?.tagName ?? ''
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+  const item = furnitureStore.selectedItem
+  const id = furnitureStore.selectedId
+  if (!item || !id) return
+  if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault()
+    const dir = e.shiftKey ? -1 : 1
+    const newRot = ((item.rotation + dir * 90) % 360 + 360) % 360
+    furnitureStore.updateItem(id, { rotation: newRot })
+    historyStore.saveSnapshot(furnitureStore.items)
   }
 })
 
@@ -279,18 +315,21 @@ function handleCanvasClick(event: MouseEvent): void {
       class="select-none"
       @pointermove="handlePointerMove"
       @pointerup="handlePointerUp"
+      @touchmove.prevent="handleRotateTouchMove"
+      @touchend="handleRotateTouchEnd"
       @dragover="handleDragOver"
       @drop="handleDrop"
       @dragleave="handleDragLeave"
     >
       <defs>
         <pattern
-          id="dot-grid"
+          id="room-grid"
           :width="roomStore.config.gridSize"
           :height="roomStore.config.gridSize"
           patternUnits="userSpaceOnUse"
         >
-          <circle cx="0" cy="0" r="1" fill="#d1d5db" />
+          <line x1="0" y1="0" :x2="roomStore.config.gridSize" y2="0" stroke="rgba(0,0,0,0.08)" stroke-width="0.5"/>
+          <line x1="0" y1="0" x2="0" :y2="roomStore.config.gridSize" stroke="rgba(0,0,0,0.08)" stroke-width="0.5"/>
         </pattern>
         <filter id="room-shadow" x="-5%" y="-5%" width="110%" height="110%">
           <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="black" flood-opacity="0.18" />
@@ -322,7 +361,7 @@ function handleCanvasClick(event: MouseEvent): void {
         x="0" y="0"
         :width="roomStore.config.width"
         :height="roomStore.config.height"
-        fill="url(#dot-grid)"
+        fill="url(#room-grid)"
         style="pointer-events: none"
       />
 
@@ -487,8 +526,9 @@ function handleCanvasClick(event: MouseEvent): void {
               fill="white"
               stroke="#6366f1"
               stroke-width="1.5"
-              style="cursor: crosshair"
+              :style="{ cursor: rotatingId === item.id ? 'grabbing' : 'grab' }"
               @pointerdown.stop="(e) => handleRotatePointerDown(item, e)"
+              @touchstart.stop.prevent="(e) => handleRotateTouchStart(item, e)"
             />
             <!-- Live arc overlay (only during active rotation) -->
             <path

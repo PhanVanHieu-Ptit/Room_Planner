@@ -17,7 +17,7 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
       e.preventDefault()
       const restored = historyStore.undo()
       if (restored !== null) furnitureStore.setItems(restored)
-    } else if ((e.key === 'Z' && e.shiftKey) || (e.key === 'y' && !e.shiftKey)) {
+    } else if (((e.key === 'z' || e.key === 'Z') && e.shiftKey) || (e.key === 'y' && !e.shiftKey)) {
       e.preventDefault()
       const restored = historyStore.redo()
       if (restored !== null) furnitureStore.setItems(restored)

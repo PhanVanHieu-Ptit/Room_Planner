@@ -4,8 +4,6 @@ import type { FurnitureItem } from '@/types'
 import { useFurnitureStore } from '@/stores/furnitureStore'
 import { useRoomStore } from '@/stores/roomStore'
 
-const GRID = 20
-
 interface DragState {
   itemId: string | null
   itemWidth: number
@@ -37,10 +35,6 @@ export function useDragDrop(svgRef: Ref<SVGSVGElement | null>): {
     return pt.matrixTransform(svg.getScreenCTM()!.inverse())
   }
 
-  function snap(val: number): number {
-    return Math.round(val / GRID) * GRID
-  }
-
   function onPointerDown(item: FurnitureItem, event: PointerEvent): void {
     if (item.locked || !svgRef.value) return
     event.preventDefault()
@@ -59,9 +53,12 @@ export function useDragDrop(svgRef: Ref<SVGSVGElement | null>): {
     const { itemId, itemWidth, itemHeight, offsetX, offsetY } = dragState.value
     if (!itemId) return
     const svgPos = toSVGCoords(event.clientX, event.clientY)
-    const { width: roomW, height: roomH } = roomStore.config
-    const x = Math.max(0, Math.min(snap(svgPos.x - offsetX), roomW - itemWidth))
-    const y = Math.max(0, Math.min(snap(svgPos.y - offsetY), roomH - itemHeight))
+    const { width: roomW, height: roomH, snapEnabled, gridSize } = roomStore.config
+    const rawX = svgPos.x - offsetX
+    const rawY = svgPos.y - offsetY
+    const snap = (v: number) => snapEnabled ? Math.round(v / gridSize) * gridSize : v
+    const x = Math.max(0, Math.min(snap(rawX), roomW - itemWidth))
+    const y = Math.max(0, Math.min(snap(rawY), roomH - itemHeight))
     furnitureStore.updateItem(itemId, { x, y })
   }
 
