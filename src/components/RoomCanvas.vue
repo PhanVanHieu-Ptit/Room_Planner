@@ -249,7 +249,10 @@ function completeDragSelect(): void {
 // ── Existing handlers (modified) ─────────────────────────────────────────────
 function handleItemPointerDown(item: FurnitureItem, event: PointerEvent): void {
   event.stopPropagation()
-  if (event.shiftKey) {
+  if (event.altKey) {
+    furnitureStore.selectItem(item.id)
+    handleRotatePointerDown(item, event)
+  } else if (event.shiftKey) {
     furnitureStore.addToSelection(item.id)
   } else {
     furnitureStore.selectItem(item.id)
@@ -564,6 +567,18 @@ function handleCanvasClick(event: MouseEvent): void {
           </g>
         </g>
       </g>
+
+      <!-- Live position tooltip during drag -->
+      <text
+        v-if="isDragging && furnitureStore.selectedItem"
+        :x="furnitureStore.selectedItem.x + furnitureStore.selectedItem.width / 2"
+        :y="Math.max(-35, furnitureStore.selectedItem.y - 10)"
+        text-anchor="middle"
+        font-size="10"
+        fill="#3b82f6"
+        font-family="sans-serif"
+        style="pointer-events: none"
+      >x: {{ Math.round(furnitureStore.selectedItem.x) }}, y: {{ Math.round(furnitureStore.selectedItem.y) }}</text>
     </svg>
 
     <!-- Right-click context menu -->

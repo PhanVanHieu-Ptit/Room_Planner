@@ -22,7 +22,11 @@ const TYPE_ICONS: Record<string, string> = {
 const local = reactive({ name: '', x: 0, y: 0, width: 0, height: 0, rotation: 0, color: '#CCCCCC' })
 
 watch(
-  () => furnitureStore.selectedItem?.id,
+  () => [
+    furnitureStore.selectedItem?.id,
+    furnitureStore.selectedItem?.x,
+    furnitureStore.selectedItem?.y,
+  ],
   () => {
     const item = furnitureStore.selectedItem
     if (item) Object.assign(local, item)
